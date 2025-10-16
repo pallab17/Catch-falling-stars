@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌟 Catch the Falling Stars</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: darkblue;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .game-area {
+      width: 360px;
+      height: 500px;
+      background: black;
+      position: relative;
+      overflow: hidden;
+      border: 3px solid gold;
+      margin: 20px 0;
+    }
+
+    .basket {
+      width: 100px;
+      height: 20px;
+      background: gold;
+      position: absolute;
+      bottom: 10px;
+      left: 130px;
+      border-radius: 10px;
+    }
+
+    .star {
+      width: 30px;
+      height: 30px;
+      background: yellow;
+      border-radius: 50%;
+      position: absolute;
+      top: 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: crimson;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: red;
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background: gray;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #score, #lives {
+      font-size: 22px;
+      margin: 10px;
+    }
+
+    #message {
+      font-size: 24px;
+      color: gold;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 400px) {
+      .game-area { width: 300px; height: 450px; }
+      .basket { width: 80px; left: 110px; }
+      .star { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🌟 Catch the Falling Stars</h1>
+  <div id="score">Score: 0</div>
+  <div id="lives">Lives: 3</div>
+  <div class="game-area" id="gameArea">
+    <div class="basket" id="basket"></div>
+  </div>
+  <div id="controls">
+    <button id="startBtn" onclick="startGame()">Start</button>
+    <button id="resetBtn" onclick="resetGame()">Reset</button>
+  </div>
+  <div id="message"></div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const basket = document.getElementById("basket");
+    const scoreDisplay = document.getElementById("score");
+    const livesDisplay = document.getElementById("lives");
+    const message = document.getElementById("message");
+
+    let score = 0;
+    let lives = 3;
+    let gameActive = false;
+    let starInterval;
+    let basketPosition = 130; // initial left
+    const basketWidth = 100;
+
+    // Move basket with arrow keys
+    document.addEventListener("keydown", e => {
+      if (!gameActive) return;
+      const step = 20;
+      if (e.key === "ArrowLeft") {
+        basketPosition = Math.max(0, basketPosition - step);
+      } else if (e.key === "ArrowRight") {
+        basketPosition = Math.min(gameArea.clientWidth - basketWidth, basketPosition + step);
+      }
+      basket.style.left = basketPosition + "px";
+    });
+
+    function createStar() {
+      const star = document.createElement("div");
+      star.classList.add("star");
+      const x = Math.floor(Math.random() * (gameArea.clientWidth - 30));
+      star.style.left = x + "px";
+      star.style.top = "0px";
+      gameArea.appendChild(star);
+
+      let top = 0;
+      const fallSpeed = Math.random() * 3 + 2; // pixels per interval
+
+      const fall = setInterval(() => {
+        if (!gameActive) {
+          clearInterval(fall);
+          star.remove();
+          return;
+        }
+        top += fallSpeed;
+        star.style.top = top + "px";
+
+        // Check collision with basket
+        const starRect = star.getBoundingClientRect();
+        const basketRect = basket.getBoundingClientRect();
+        if (
+          starRect.bottom >= basketRect.top &&
+          starRect.left + starRect.width >= basketRect.left &&
+          starRect.left <= basketRect.right
+        ) {
+          score++;
+          scoreDisplay.textContent = "Score: " + score;
+          star.remove();
+          clearInterval(fall);
+        }
+
+        // If star hits bottom
+        if (top >= gameArea.clientHeight - 30) {
+          lives--;
+          livesDisplay.textContent = "Lives: " + lives;
+          star.remove();
+          clearInterval(fall);
+          if (lives <= 0) {
+            endGame();
+          }
+        }
+      }, 20);
+    }
+
+    function startGame() {
+      if (gameActive) return;
+      score = 0;
+      lives = 3;
+      gameActive = true;
+      scoreDisplay.textContent = "Score: 0";
+      livesDisplay.textContent = "Lives: 3";
+      message.textContent = "Catch the stars!";
+      basketPosition = (gameArea.clientWidth - basketWidth) / 2;
+      basket.style.left = basketPosition + "px";
+
+      starInterval = setInterval(createStar, 800);
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(starInterval);
+      message.textContent = "Game Over! Final Score: " + score;
+    }
+
+    function resetGame() {
+      endGame();
+      score = 0;
+      lives = 3;
+      scoreDisplay.textContent = "Score: 0";
+      livesDisplay.textContent = "Lives: 3";
+      message.textContent = "";
+      // Remove all stars
+      document.querySelectorAll(".star").forEach(star => star.remove());
+      basketPosition = (gameArea.clientWidth - basketWidth) / 2;
+      basket.style.left = basketPosition + "px";
+    }
+  </script>
+</body>
+</html>
